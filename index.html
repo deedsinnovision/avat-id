@@ -1,0 +1,1191 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Avat.ID – Ihr Digitaler Zwilling: Daten-Erfassungsbogen</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* Angepasste Farben für den verspielten Look */
+        :root {
+            --primary-accent: #6A057F; /* Deep Purple */
+            --secondary-accent: #FF6F61; /* Coral Red */
+            --tertiary-accent: #88B04B; /* Lime Green */
+            --neutral-background: #F8F8F8; /* Off-White */
+            --card-background: #FFFFFF; /* White */
+            --text-dark: #333333; /* Dark Gray */
+            --text-light: #666666; /* Medium Gray */
+
+            /* Persona-Farben */
+            --persona-alle: #6A057F;
+            --persona-beruflich: #88B04B;
+            --persona-privat: #FF6F61;
+            --persona-reise: #FFD166;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--neutral-background);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 1.5rem;
+            box-sizing: border-box;
+        }
+
+        /* Lade-Spinner Styling */
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: var(--primary-accent);
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Profil-Vollständigkeitskreis Styling */
+        .profile-completeness-circle {
+            position: relative;
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: var(--text-dark);
+            background: conic-gradient(var(--tertiary-accent) var(--progress, 0%), #e0e0e0 var(--progress, 0%));
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Sanfter Schatten */
+        }
+        .profile-completeness-circle::before {
+            content: '';
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            background-color: var(--card-background);
+            border-radius: 50%;
+        }
+        .profile-completeness-circle span {
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Avatar Styling */
+        .avatar-container {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            background-color: var(--card-background);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            border: 5px solid var(--primary-accent); /* Persona-Farbe wird hier überschrieben */
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2); /* Ausgeprägterer Schatten */
+            transition: transform 0.3s ease-in-out, border-color 0.3s ease-in-out, box-shadow 0.3s ease-in-out, filter 0.3s ease-in-out, outline 0.3s ease-in-out;
+        }
+        .avatar-container:hover {
+            transform: scale(1.05);
+        }
+        .avatar-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .avatar-container svg {
+            width: 80%;
+            height: 80%;
+            color: var(--text-dark);
+        }
+        .mood-indicator {
+            font-size: 3rem;
+            margin-top: 0.5rem;
+            transition: transform 0.3s ease-in-out;
+        }
+        .mood-indicator:hover {
+            transform: scale(1.2);
+        }
+
+        /* Profil-Header Styling */
+        .profile-header {
+            background-color: var(--primary-accent);
+            background-image: url('https://placehold.co/1200x200/6A057F/FFFFFF?text=Avat.ID+Banner');
+            background-size: cover;
+            background-position: center;
+            height: 150px;
+            width: 100%;
+            border-radius: 1.5rem 1.5rem 0 0; /* Stärker abgerundete Ecken */
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            margin-bottom: 2rem;
+        }
+
+        /* Allgemeine Karten- und Formular-Elemente */
+        .playful-card {
+            background-color: var(--card-background);
+            border-radius: 1.5rem; /* Stärker abgerundet */
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15); /* Ausgeprägterer Schatten */
+            padding: 2rem; /* Mehr Padding */
+            margin-bottom: 1.5rem;
+            transition: transform 0.2s ease-in-out;
+        }
+        .playful-card:hover {
+            transform: translateY(-5px); /* Leichter Schwebeeffekt */
+        }
+
+        .playful-input, .playful-select, .playful-textarea {
+            background-color: var(--neutral-background);
+            border: 2px solid #e0e0e0; /* Leichter Rand */
+            border-radius: 0.75rem; /* Abgerundeter */
+            padding: 0.75rem 1rem;
+            color: var(--text-dark);
+            outline: none;
+            transition: all 0.2s ease-in-out;
+        }
+        .playful-input:focus, .playful-select:focus, .playful-textarea:focus {
+            border-color: var(--secondary-accent);
+            box-shadow: 0 0 0 3px rgba(255, 111, 97, 0.3); /* Leuchtender Fokus */
+        }
+        .playful-select {
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%23666666'%3E%3Cpath d='M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 6.757 7.586 5.343 9z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 0.75rem center;
+            background-size: 0.8em auto;
+        }
+
+        .playful-button {
+            background-color: var(--primary-accent);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem; /* Abgerundet */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Sanfter Schatten */
+            transition: all 0.2s ease-in-out;
+            outline: none;
+            border: none;
+            font-weight: 600;
+        }
+        .playful-button:hover {
+            background-color: var(--secondary-accent); /* Farbwechsel bei Hover */
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+            transform: translateY(-2px);
+        }
+        .playful-button:active {
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transform: translateY(1px);
+        }
+
+        .playful-toggle {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+        .playful-toggle input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .playful-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #e0e0e0;
+            border-radius: 34px;
+            transition: .4s;
+        }
+        .playful-slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: var(--card-background);
+            border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            transition: .4s;
+        }
+        input:checked + .playful-slider {
+            background-color: var(--tertiary-accent);
+        }
+        input:checked + .playful-slider:before {
+            transform: translateX(26px);
+        }
+
+        .hint-card {
+            background-color: #FFFBEB; /* Light Yellow */
+            border: 1px solid #FCD34D; /* Darker Yellow */
+            color: #92400E; /* Brownish text */
+            padding: 1rem;
+            border-radius: 0.75rem;
+            display: flex;
+            align-items: center;
+            font-size: 0.9rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        .hint-card.positive {
+            background-color: #D1FAE5; /* Light Green */
+            border-color: #34D399; /* Darker Green */
+            color: #065F46; /* Dark Green text */
+        }
+        .hint-card.alert {
+            background-color: #FEE2E2; /* Light Red */
+            border-color: #F87171; /* Darker Red */
+            color: #991B1B; /* Dark Red text */
+        }
+        .hint-card .icon {
+            font-size: 1.5rem;
+            margin-right: 0.75rem;
+        }
+
+        /* Responsive Anpassungen */
+        @media (max-width: 768px) {
+            .main-container {
+                flex-direction: column;
+            }
+            .sidebar, #frames {
+                width: 100%;
+            }
+            .profile-completeness-circle {
+                width: 90px;
+                height: 90px;
+                font-size: 2rem;
+            }
+            .profile-completeness-circle::before {
+                width: 75px;
+                height: 75px;
+            }
+            .avatar-container {
+                width: 100px;
+                height: 100px;
+                border: 3px solid var(--primary-accent);
+                box-shadow: 0 0 0 5px rgba(106, 5, 127, 0.3);
+            }
+            .mood-indicator {
+                font-size: 2.5rem;
+            }
+            h1 {
+                font-size: 2.5rem;
+            }
+            .persona-switcher, .playful-card {
+                padding: 1rem;
+            }
+            .frame h2 {
+                font-size: 1.25rem;
+                padding: 1rem;
+            }
+            .frame-content {
+                padding: 1rem;
+            }
+            .profile-header {
+                height: 100px;
+                margin-bottom: 1.5rem;
+                border-radius: 1rem 1rem 0 0;
+            }
+        }
+    </style>
+</head>
+<body class="antialiased">
+    <h1 class="text-4xl sm:text-5xl font-extrabold text-gray-900 mb-8 mt-4 text-center">
+        <span style="color: var(--primary-accent);">✨</span> Avat.ID
+    </h1>
+
+    <div class="profile-header w-full max-w-4xl rounded-xl shadow-lg">
+        <div class="avatar-section absolute -bottom-12 flex flex-col items-center">
+            <div id="avatarContainer" class="avatar-container cursor-pointer" style="border-color: var(--persona-alle);">
+                <img id="uploadedAvatarImage" src="uploaded:Portrait.jpg-ebc4d5da-40b5-4b0e-9b09-9a5ab4001e9c" alt="Benutzer-Avatar">
+                <svg id="defaultAvatarSvg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="hidden">
+                    <path fill-rule="evenodd" d="M7.5 6a4.5 4.5 0 1 1 9 0a4.5 4.5 0 0 1 -9 0ZM3.751 20.105a8.25 8.25 0 0 1 16.498 0 .75.75 0 0 1 -.437 .695A18.623 18.623 0 0 1 12 22.5a18.623 18.623 0 0 1 -7.812 -1.7a.75.75 0 0 1 -.437 -.695Z" clip-rule="evenodd" />
+                </svg>
+            </div>
+            <div id="moodIndicator" class="mood-indicator">😊</div>
+            <p class="text-2xl font-bold" style="color: var(--text-dark); margin-top: 1rem;">Lena Schmidt</p>
+            <p id="currentPersonaDisplay" class="text-gray-600 text-sm">Aktive Persona: Alle Frames</p>
+        </div>
+    </div>
+
+    <div class="persona-switcher playful-card mb-8 mt-24 w-full max-w-4xl">
+        <label for="persona" class="block text-gray-700 text-lg font-semibold mb-3">
+            🎭 Persona wählen:
+        </label>
+        <div class="relative">
+            <select id="persona" onchange="switchPersona(this.value)"
+                    class="playful-select w-full py-3 px-4 pr-8 text-lg">
+                <option value="alle">Alle Frames</option>
+                <option value="beruflich">👔 Beruflich</option>
+                <option value="privat">🏠 Privat</option>
+                <option value="reise">🌍 Reise</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="main-container flex flex-col md:flex-row w-full max-w-4xl gap-6">
+        <div class="sidebar w-full md:w-1/3 playful-card flex flex-col items-center space-y-6">
+            <div class="avatar-customization w-full mt-4">
+                <h3 class="text-lg font-bold text-gray-800 mb-3 flex items-center">
+                    <span class="mr-2">🎨</span> Avatar anpassen
+                </h3>
+                <label for="predefinedAvatarSelector" class="block text-gray-700 text-sm font-semibold mb-2">Vordefinierte Avatare:</label>
+                <select id="predefinedAvatarSelector" onchange="selectPredefinedAvatar(this.value)"
+                        class="playful-select w-full mb-4">
+                    <option value="uploaded:Portrait.jpg-ebc4d5da-40b5-4b0e-9b09-9a5ab4001e9c">Standard (Portrait)</option>
+                    <option value="uploaded:cr2key (5).jpg-dcfeb95e-7c2c-4e3a-8961-bb510f6fcb01">Bild 1 (cr2key 5)</option>
+                    <option value="uploaded:cr2key (6).jpg-02262eaa-2f19-45b6-8c39-52115ed51563">Bild 2 (cr2key 6)</option>
+                    <option value="uploaded:cr2key (7).jpg-30f12691-8e42-421d-8e05-173bd9a9ba37">Bild 3 (cr2key 7)</option>
+                    <option value="uploaded:cr2key (9).jpg-ee590c46-d1b8-4fd1-bfc0-02c8d7b44621">Bild 4 (cr2key 9)</option>
+                    <option value="uploaded:cr2key (16).jpg-b22f74b3-2c48-402e-b9cc-eb3029e004f8">Bild 5 (cr2key 16)</option>
+                    <option value="uploaded:cr2key (17).jpg-42cc36ec-c54e-46fc-9257-74c3e8a51195">Bild 6 (cr2key 17)</option>
+                    <option value="uploaded:cr2key (25).jpg-ffa563cb-d9a1-4c3c-9961-eafd0ad10ae5">Bild 7 (cr2key 25)</option>
+                    <option value="uploaded:cr2key (26).jpg-4e99244b-ccd8-40bc-83a8-c97328d73c1f">Bild 8 (cr2key 26)</option>
+                    <option value="uploaded:cr2key (27).jpg-0a68043d-f612-4fdb-8c48-330c00c9d833">Bild 9 (cr2key 27)</option>
+                    <option value="uploaded:cr2key (30).jpg-da368038-853c-4693-a2f3-105b835fc017">Bild 10 (cr2key 30)</option>
+                    <option value="custom">Eigenes Bild hochladen...</option>
+                </select>
+
+                <input type="file" id="avatarUpload" accept="image/*" class="w-full text-sm text-gray-700 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 mb-4 hidden">
+
+                <label for="avatarStyle" class="block text-gray-700 text-sm font-semibold mb-2">Avatar-Stil:</label>
+                <select id="avatarStyle" onchange="applyAvatarStyle(this.value)"
+                        class="playful-select w-full mb-4">
+                    <option value="realistic">Realistisch</option>
+                    <option value="default">Standard (SVG)</option>
+                    <option value="futuristic">Futuristisch</option>
+                    <option value="cartoon">Cartoon</option>
+                </select>
+                <label for="moodSelector" class="block text-gray-700 text-sm font-semibold mb-2">Stimmung wählen:</label>
+                <select id="moodSelector" onchange="updateMood(this.value)"
+                        class="playful-select w-full mb-4">
+                    <option value="😊">😊 Glücklich</option>
+                    <option value="💼">💼 Beruflich</option>
+                    <option value="🏠">🏠 Entspannt</option>
+                    <option value="✈️">✈️ Abenteuerlich</option>
+                    <option value="😩">😩 Gestresst</option>
+                    <option value="🚀">🚀 Produktiv</option>
+                </select>
+            </div>
+
+            <div class="live-status-dashboard w-full mt-6 playful-card">
+                <h3 class="text-lg font-bold text-gray-800 mb-3 flex items-center">
+                    <span class="mr-2">📊</span> Live-Status
+                </h3>
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between p-3 rounded-lg" style="background-color: var(--neutral-background);">
+                        <span class="text-gray-700 font-semibold">🧠 Konzentration:</span>
+                        <div class="flex items-center">
+                            <span id="concentrationStatus" class="text-2xl mr-2">🟢</span>
+                            <span class="text-sm text-gray-600">Hoch</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between p-3 rounded-lg" style="background-color: var(--neutral-background);">
+                        <span class="text-gray-700 font-semibold">🏃‍♂️ Fitness:</span>
+                        <div class="w-2/3 bg-gray-200 rounded-full h-3">
+                            <div class="h-3 rounded-full" style="width: 75%; background-color: var(--tertiary-accent);"></div>
+                        </div>
+                        <span class="text-sm text-gray-600">75% Ziel</span>
+                    </div>
+                    <div class="profile-completeness-circle" style="--progress: 68%;">
+                        <span>68%</span>
+                    </div>
+                    <p class="text-gray-700 font-semibold text-center">Profil vollständigkeit</p>
+                </div>
+            </div>
+
+            <div class="recommendations w-full space-y-4">
+                <h3 class="text-lg font-bold text-gray-800 mb-3 flex items-center">
+                    <span class="mr-2">💡</span> Empfehlungen
+                </h3>
+                <div class="hint-card positive">
+                    <span class="icon">✅</span> Kontaktinformationen ergänzen.
+                </div>
+                <div class="hint-card positive">
+                    <span class="icon">❤️</span> Ergänze deine Allergien für die Notfallkarte!
+                </div>
+                <div class="hint-card alert">
+                    <span class="icon">🚨</span> Finanzdaten aktualisieren.
+                </div>
+            </div>
+
+            <div class="smart-suggestions w-full mt-6 playful-card">
+                <h3 class="text-lg font-bold text-gray-800 mb-3 flex items-center">
+                    <span class="mr-2">✨</span> Smart Suggestions
+                </h3>
+                <div class="space-y-3">
+                    <div class="p-3 rounded-lg flex items-center justify-between" style="background-color: var(--neutral-background);">
+                        <div>
+                            <p class="font-semibold text-gray-700">✈️ Reiseverhalten erkannt</p>
+                            <p class="text-sm text-gray-600">Möchtest du ein automatisches Travel-Profil aktivieren?</p>
+                        </div>
+                        <button class="playful-button text-sm px-3 py-1">Aktivieren</button>
+                    </div>
+                    <div class="p-3 rounded-lg flex items-center justify-between" style="background-color: var(--neutral-background);">
+                        <div>
+                            <p class="font-semibold text-gray-700">🎓 Zertifikate veraltet</p>
+                            <p class="text-sm text-gray-600">Deine Zertifikate sind älter als 3 Jahre – aktualisieren?</p>
+                        </div>
+                        <button class="playful-button text-sm px-3 py-1">Jetzt aktualisieren</button>
+                    </div>
+                    <div class="p-3 rounded-lg flex items-center justify-between" style="background-color: var(--neutral-background);">
+                        <div>
+                            <p class="font-semibold text-gray-700">🔗 Neue Plattform-Integration</p>
+                            <p class="text-sm text-gray-600">Plattform X jetzt mit deinem Job-Profil verknüpfen?</p>
+                        </div>
+                        <button class="playful-button text-sm px-3 py-1">Verknüpfen</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="security-integrity w-full mt-6 playful-card">
+                <h3 class="text-lg font-bold text-gray-800 mb-3 flex items-center">
+                    <span class="mr-2">🔒</span> Sicherheit & Integrität
+                </h3>
+                <div class="p-3 rounded-lg text-sm flex items-center justify-between" style="background-color: var(--tertiary-accent); color: white;">
+                    <span>Status: Alles in Ordnung</span>
+                    <span class="text-xl">✅</span>
+                </div>
+            </div>
+
+            <div class="recent-activities w-full mt-6 playful-card">
+                <h3 class="text-lg font-bold text-gray-800 mb-3 flex items-center">
+                    <span class="mr-2">🔔</span> Aktuelle Aktivitäten
+                </h3>
+                <div class="p-4 rounded-lg space-y-3" style="background-color: var(--neutral-background);">
+                    <div class="activity-item text-gray-700 text-sm">
+                        <span class="font-semibold">Vor 2 Stunden:</span> Finanzdaten erfolgreich analysiert.
+                    </div>
+                    <div class="activity-item text-gray-700 text-sm">
+                        <span class="font-semibold">Gestern:</span> Neue Empfehlung für Reiseplanung erhalten.
+                    </div>
+                    <div class="activity-item text-gray-700 text-sm">
+                        <span class="font-semibold">Vor 3 Tagen:</span> Sicherheits-Scan abgeschlossen.
+                    </div>
+                    <div class="activity-item text-gray-700 text-sm">
+                        <span class="font-semibold">Letzte Woche:</span> Profil-Vollständigkeit auf 68% erhöht.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="frames" class="w-full md:w-2/3 space-y-6">
+            <div class="frame playful-card overflow-hidden" data-persona="alle beruflich privat">
+                <h2 onclick="toggleFrame(this)"
+                    class="flex justify-between items-center p-6 text-white text-xl font-bold cursor-pointer select-none rounded-t-xl transition duration-300 ease-in-out" style="background-color: var(--secondary-accent);">
+                    📋 Persönliche Basisdaten <span class="toggle-icon">▼</span>
+                </h2>
+                <div class="frame-content p-6 hidden">
+                    <div class="progress-bar w-full bg-gray-200 rounded-full h-3 mb-4">
+                        <div class="h-3 rounded-full" style="width: 80%; background-color: var(--tertiary-accent);"></div>
+                    </div>
+                    <label for="name" class="block text-gray-700 text-sm font-semibold mb-2">Vollständiger Name</label>
+                    <input type="text" id="name" value="Lena Schmidt"
+                           class="playful-input w-full mb-4"/>
+
+                    <label for="birthdate" class="block text-gray-700 text-sm font-semibold mb-2">Geburtsdatum</label>
+                    <input type="date" id="birthdate" value="1995-08-15"
+                           class="playful-input w-full mb-4"/>
+
+                    <label for="birthplace" class="block text-gray-700 text-sm font-semibold mb-2">Geburtsort</label>
+                    <input type="text" id="birthplace" value="München, Deutschland"
+                           class="playful-input w-full mb-4"/>
+
+                    <label for="gender" class="block text-gray-700 text-sm font-semibold mb-2">Geschlecht</label>
+                    <select id="gender" class="playful-select w-full mb-4">
+                        <option value="weiblich">Weiblich</option>
+                        <option value="männlich">Männlich</option>
+                        <option value="divers">Divers</option>
+                    </select>
+
+                    <label for="nationality" class="block text-gray-700 text-sm font-semibold mb-2">Nationalität</label>
+                    <input type="text" id="nationality" value="Deutsch"
+                           class="playful-input w-full mb-4"/>
+
+                    <label for="aboutMe" class="block text-gray-700 text-sm font-semibold mb-2">Über Mich / Bio</label>
+                    <textarea id="aboutMe" rows="3"
+                              class="playful-textarea w-full mb-4"
+                              placeholder="Erzählen Sie etwas über sich...">Kreative Marketingmanagerin mit einer Leidenschaft für digitale Trends und Reisen. Liebt es, neue Kulturen zu entdecken und in der Natur zu sein.</textarea>
+
+                    <button onclick="generatePersonalSummary()"
+                            class="playful-button w-full flex items-center justify-center">
+                        ✨ Persönliche Daten analysieren & Empfehlungen erhalten
+                        <div id="personalSummaryLoading" class="spinner ml-3 hidden"></div>
+                    </button>
+                    <div id="personalSummaryOutput" class="mt-4 p-4 rounded-lg text-gray-800 text-sm hidden" style="background-color: var(--neutral-background);">
+                    </div>
+                </div>
+            </div>
+
+            <div class="frame playful-card overflow-hidden" data-persona="alle beruflich privat">
+                <h2 onclick="toggleFrame(this)"
+                    class="flex justify-between items-center p-6 text-white text-xl font-bold cursor-pointer select-none rounded-t-xl transition duration-300 ease-in-out" style="background-color: var(--secondary-accent);">
+                    📞 Kontaktdaten <span class="toggle-icon">▼</span>
+                </h2>
+                <div class="frame-content p-6 hidden">
+                    <div class="progress-bar w-full bg-gray-200 rounded-full h-3 mb-4">
+                        <div class="h-3 rounded-full" style="width: 100%; background-color: var(--tertiary-accent);"></div>
+                    </div>
+                    <label for="address" class="block text-gray-700 text-sm font-semibold mb-2">Adresse</label>
+                    <input type="text" id="address" value="Blumenweg 7, 80331 München, Deutschland"
+                           class="playful-input w-full mb-4"/>
+
+                    <label for="phone" class="block text-gray-700 text-sm font-semibold mb-2">Telefonnummer</label>
+                    <input type="tel" id="phone" value="+49 176 12345678"
+                           class="playful-input w-full mb-4"/>
+
+                    <label for="email" class="block text-gray-700 text-sm font-semibold mb-2">E-Mail-Adresse</label>
+                    <input type="email" id="email" value="lena.schmidt@example.com"
+                           class="playful-input w-full mb-4"/>
+                </div>
+            </div>
+
+            <div class="frame playful-card overflow-hidden" data-persona="alle beruflich privat">
+                <h2 onclick="toggleFrame(this)"
+                    class="flex justify-between items-center p-6 text-white text-xl font-bold cursor-pointer select-none rounded-t-xl transition duration-300 ease-in-out" style="background-color: var(--secondary-accent);">
+                    💳 Finanz- & Vertragsdaten <span class="toggle-icon">▼</span>
+                </h2>
+                <div class="frame-content p-6 hidden">
+                    <div class="progress-bar w-full bg-gray-200 rounded-full h-3 mb-4">
+                        <div class="h-3 rounded-full" style="width: 75%; background-color: var(--tertiary-accent);"></div>
+                    </div>
+                    <label for="iban" class="block text-gray-700 text-sm font-semibold mb-2">IBAN</label>
+                    <input type="text" id="iban" value="DE12 3456 7890 0000 1234 56"
+                           class="playful-input w-full mb-4"/>
+
+                    <label for="bic" class="block text-gray-700 text-sm font-semibold mb-2">BIC</label>
+                    <input type="text" id="bic" value="MUSTERDEFFXXX"
+                           class="playful-input w-full mb-4"/>
+
+                    <label for="creditCard" class="block text-gray-700 text-sm font-semibold mb-2">Kreditkarte vorhanden?</label>
+                    <select id="creditCard" class="playful-select w-full mb-4">
+                        <option value="ja">Ja</option>
+                        <option value="nein">Nein</option>
+                    </select>
+
+                    <label for="creditScore" class="block text-gray-700 text-sm font-semibold mb-2">Kreditwürdigkeit</label>
+                    <input type="text" id="creditScore" value="Ausgezeichnet"
+                           class="playful-input w-full mb-4"/>
+
+                    <button onclick="generateFinancialSummary()"
+                            class="playful-button w-full flex items-center justify-center mb-4">
+                        💰 Finanzdaten analysieren & Empfehlungen erhalten
+                        <div id="financialSummaryLoading" class="spinner ml-3 hidden"></div>
+                    </button>
+                    <div id="financialSummaryOutput" class="mt-4 p-4 rounded-lg text-gray-800 text-sm hidden" style="background-color: var(--neutral-background);">
+                    </div>
+
+                    <button onclick="checkFinancialFraud()"
+                            class="playful-button w-full flex items-center justify-center" style="background-color: var(--secondary-accent);">
+                        🚨 Betrugsprüfung starten (Finanzdaten)
+                        <div id="fraudCheckLoading" class="spinner ml-3 hidden"></div>
+                    </button>
+                    <div id="fraudCheckOutput" class="mt-4 p-4 rounded-lg text-red-800 text-sm hidden" style="background-color: #FEE2E2; border: 1px solid #F87171;">
+                    </div>
+                </div>
+            </div>
+
+            <div class="frame playful-card overflow-hidden" data-persona="alle reise privat">
+                <h2 onclick="toggleFrame(this)"
+                    class="flex justify-between items-center p-6 text-white text-xl font-bold cursor-pointer select-none rounded-t-xl transition duration-300 ease-in-out" style="background-color: var(--secondary-accent);">
+                    🏥 Gesundheitsdaten <span class="toggle-icon">▼</span>
+                </h2>
+                <div class="frame-content p-6 hidden">
+                    <div class="progress-bar w-full bg-gray-200 rounded-full h-3 mb-4">
+                        <div class="h-3 rounded-full" style="width: 90%; background-color: var(--tertiary-accent);"></div>
+                    </div>
+                    <label for="healthHistory" class="block text-gray-700 text-sm font-semibold mb-2">Krankengeschichte</label>
+                    <input type="text" id="healthHistory" value="Keine chronischen Diagnosen, Routineuntersuchungen jährlich"
+                           class="playful-input w-full mb-4"/>
+
+                    <label for="healthInsurance" class="block text-gray-700 text-sm font-semibold mb-2">Krankenkasse</label>
+                    <input type="text" id="healthInsurance" value="AOK Bayern"
+                           class="playful-input w-full mb-4"/>
+
+                    <label for="allergies" class="block text-gray-700 text-sm font-semibold mb-2">Allergien</label>
+                    <input type="text" id="allergies" value="Pollen (Heuschnupfen)"
+                           class="playful-input w-full mb-4"/>
+
+                    <label for="medications" class="block text-gray-700 text-sm font-semibold mb-2">Medikamentenliste</label>
+                    <input type="text" id="medications" value="Antihistaminika (saisonal)"
+                           class="playful-input w-full mb-4"/>
+                </div>
+            </div>
+
+            <div class="frame playful-card overflow-hidden" data-persona="alle beruflich">
+                <h2 onclick="toggleFrame(this)"
+                    class="flex justify-between items-center p-6 text-white text-xl font-bold cursor-pointer select-none rounded-t-xl transition duration-300 ease-in-out" style="background-color: var(--secondary-accent);">
+                    🎓 Bildung & Beruf <span class="toggle-icon">▼</span>
+                </h2>
+                <div class="frame-content p-6 hidden">
+                    <div class="progress-bar w-full bg-gray-200 rounded-full h-3 mb-4">
+                        <div class="h-3 rounded-full" style="width: 85%; background-color: var(--tertiary-accent);"></div>
+                    </div>
+                    <label for="profession" class="block text-gray-700 text-sm font-semibold mb-2">Beruf</label>
+                    <input type="text" id="profession" value="Marketingmanagerin"
+                           class="playful-input w-full mb-4"/>
+
+                    <label for="employer" class="block text-gray-700 text-sm font-semibold mb-2">Aktueller Arbeitgeber</label>
+                    <input type="text" id="employer" value="Digital Innovations AG"
+                           class="playful-input w-full mb-4"/>
+
+                    <label for="employmentHistory" class="block text-gray-700 text-sm font-semibold mb-2">Beschäftigungsverlauf</label>
+                    <textarea id="employmentHistory" rows="2"
+                              class="playful-textarea w-full mb-4">Marketingassistentin bei Creative Solutions (2017-2020)</textarea>
+
+                    <label for="degree" class="block text-gray-700 text-sm font-semibold mb-2">Höchster Abschluss</label>
+                    <input type="text" id="degree" value="Bachelor of Arts (Medienmanagement), Hochschule München (2017)"
+                           class="playful-input w-full mb-4"/>
+
+                    <label for="certificates" class="block text-gray-700 text-sm font-semibold mb-2">Zertifikate</label>
+                    <input type="text" id="certificates" value="Google Analytics Zertifizierung (2021), Content Marketing Professional (2023)"
+                           class="playful-input w-full mb-4"/>
+                </div>
+            </div>
+
+            <div class="frame playful-card overflow-hidden" data-persona="alle reise">
+                <h2 onclick="toggleFrame(this)"
+                    class="flex justify-between items-center p-6 text-white text-xl font-bold cursor-pointer select-none rounded-t-xl transition duration-300 ease-in-out" style="background-color: var(--secondary-accent);">
+                    🌍 Reise & Standort <span class="toggle-icon">▼</span>
+                </h2>
+                <div class="frame-content p-6 hidden">
+                    <div class="progress-bar w-full bg-gray-200 rounded-full h-3 mb-4">
+                        <div class="h-3 rounded-full" style="width: 60%; background-color: var(--tertiary-accent);"></div>
+                    </div>
+                    <label for="lastLocation" class="block text-gray-700 text-sm font-semibold mb-2">Letzter Aufenthaltsort</label>
+                    <input type="text" id="lastLocation" value="Kyoto, Japan (Mai 2025)"
+                           class="playful-input w-full mb-4"/>
+
+                    <label for="travelPlans" class="block text-gray-700 text-sm font-semibold mb-2">Reisepläne</label>
+                    <input type="text" id="travelPlans" value="Städtetrip nach Rom (September 2025), Wanderurlaub in den Alpen (Juli 2026)"
+                           class="playful-input w-full mb-4"/>
+
+                    <label for="transportation" class="block text-gray-700 text-sm font-semibold mb-2">Bevorzugte Transportmittel</label>
+                    <input type="text" id="transportation" value="Flugzeug, Bahn"
+                           class="playful-input w-full mb-4"/>
+
+                    <label for="visitedPlaces" class="block text-gray-700 text-sm font-semibold mb-2">Historie besuchter Orte</label>
+                    <textarea id="visitedPlaces" rows="2"
+                              class="playful-textarea w-full mb-4">Paris, New York, Bangkok, Sydney</textarea>
+                </div>
+            </div>
+
+            <div class="frame playful-card overflow-hidden" data-persona="alle beruflich privat">
+                <h2 onclick="toggleFrame(this)"
+                    class="flex justify-between items-center p-6 text-white text-xl font-bold cursor-pointer select-none rounded-t-xl transition duration-300 ease-in-out" style="background-color: var(--secondary-accent);">
+                    🌐 Online- & Digitale Daten <span class="toggle-icon">▼</span>
+                </h2>
+                <div class="frame-content p-6 hidden">
+                    <div class="progress-bar w-full bg-gray-200 rounded-full h-3 mb-4">
+                        <div class="h-3 rounded-full" style="width: 70%; background-color: var(--tertiary-accent);"></div>
+                    </div>
+                    <label for="ipAddress" class="block text-gray-700 text-sm font-semibold mb-2">IP-Adressen (zuletzt)</label>
+                    <input type="text" id="ipAddress" value="192.168.1.10 (Dynamisch)"
+                           class="playful-input w-full mb-4"/>
+
+                    <label for="socialMedia" class="block text-gray-700 text-sm font-semibold mb-2">Social-Media-Profile</label>
+                    <input type="text" id="socialMedia" value="Instagram, TikTok, LinkedIn"
+                           class="playful-input w-full mb-4"/>
+
+                    <label for="onlineAccounts" class="block text-gray-700 text-sm font-semibold mb-2">Online-Konten (E-Mail, Dienste)</label>
+                    <input type="text" id="onlineAccounts" value="Spotify, Netflix, Amazon, Google"
+                           class="playful-input w-full mb-4"/>
+                </div>
+            </div>
+
+            <div class="frame playful-card overflow-hidden" data-persona="alle beruflich privat">
+                <h2 onclick="toggleFrame(this)"
+                    class="flex justify-between items-center p-6 text-white text-xl font-bold cursor-pointer select-none rounded-t-xl transition duration-300 ease-in-out" style="background-color: var(--secondary-accent);">
+                    🔒 Sicherheits- & Zugangsdaten <span class="toggle-icon">▼</span>
+                </h2>
+                <div class="frame-content p-6 hidden">
+                    <div class="progress-bar w-full bg-gray-200 rounded-full h-3 mb-4">
+                        <div class="h-3 rounded-full" style="width: 85%; background-color: var(--tertiary-accent);"></div>
+                    </div>
+                    <label for="passwords" class="block text-gray-700 text-sm font-semibold mb-2">Passwörter & PINs</label>
+                    <input type="text" id="passwords" value="Verwaltet durch sicheren Passwort-Manager"
+                           class="playful-input w-full mb-4"/>
+
+                    <label for="accessCards" class="block text-gray-700 text-sm font-semibold mb-2">Zugangskarten</label>
+                    <input type="text" id="accessCards" value="Firmenausweis, Fitnessstudio-Karte"
+                           class="playful-input w-full mb-4"/>
+
+                    <label for="securityQuestions" class="block text-gray-700 text-sm font-semibold mb-2">Sicherheitsfragen</label>
+                    <input type="text" id="securityQuestions" value="Hinterlegt (nicht direkt sichtbar)"
+                           class="playful-input w-full mb-4"/>
+                </div>
+            </div>
+
+            <div class="frame playful-card overflow-hidden" data-persona="alle privat">
+                <h2 onclick="toggleFrame(this)"
+                    class="flex justify-between items-center p-6 text-white text-xl font-bold cursor-pointer select-none rounded-t-xl transition duration-300 ease-in-out" style="background-color: var(--secondary-accent);">
+                    👨‍👩‍👧‍👦 Familien- & Beziehungsdaten <span class="toggle-icon">▼</span>
+                </h2>
+                <div class="frame-content p-6 hidden">
+                    <div class="progress-bar w-full bg-gray-200 rounded-full h-3 mb-4">
+                        <div class="h-3 rounded-full" style="width: 50%; background-color: var(--tertiary-accent);"></div>
+                    </div>
+                    <label for="maritalStatus" class="block text-gray-700 text-sm font-semibold mb-2">Familienstand</label>
+                    <select id="maritalStatus" class="playful-select w-full mb-4">
+                        <option value="ledig">Ledig</option>
+                        <option value="verheiratet">Verheiratet</option>
+                        <option value="geschieden">Geschieden</option>
+                        <option value="verwitwet">Verwitwet</option>
+                    </select>
+
+                    <label for="familyMembers" class="block text-gray-700 text-sm font-semibold mb-2">Familienmitglieder (Namen, Daten)</label>
+                    <textarea id="familyMembers" rows="2"
+                              class="playful-textarea w-full mb-4">Schwester: Maria Schmidt (geb. 05.05.1992)</textarea>
+
+                    <label for="powerOfAttorney" class="block text-gray-700 text-sm font-semibold mb-2">Vorsorgevollmachten</label>
+                    <input type="text" id="powerOfAttorney" value="Keine hinterlegt"
+                           class="playful-input w-full mb-4"/>
+                </div>
+            </div>
+
+            <div class="frame playful-card overflow-hidden" data-persona="alle beruflich privat">
+                <h2 onclick="toggleFrame(this)"
+                    class="flex justify-between items-center p-6 text-white text-xl font-bold cursor-pointer select-none rounded-t-xl transition duration-300 ease-in-out" style="background-color: var(--secondary-accent);">
+                    ⚖️ Rechts- & Strafregisterdaten <span class="toggle-icon">▼</span>
+                </h2>
+                <div class="frame-content p-6 hidden">
+                    <div class="progress-bar w-full bg-gray-200 rounded-full h-3 mb-4">
+                        <div class="h-3 rounded-full" style="width: 100%; background-color: var(--tertiary-accent);"></div>
+                    </div>
+                    <label for="criminalRecord" class="block text-gray-700 text-sm font-semibold mb-2">Strafregisterauszüge</label>
+                    <input type="text" id="criminalRecord" value="Keine Einträge"
+                           class="playful-input w-full mb-4"/>
+
+                    <label for="courtOrders" class="block text-gray-700 text-sm font-semibold mb-2">Gerichtsbeschlüsse</label>
+                    <input type="text" id="courtOrders" value="Keine"
+                           class="playful-input w-full mb-4"/>
+
+                    <label for="adminActs" class="block text-gray-700 text-sm font-semibold mb-2">Verwaltungsakte</label>
+                    <input type="text" id="adminActs" value="Keine Bußgeldbescheide"
+                           class="playful-input w-full mb-4"/>
+                </div>
+            </div>
+
+            <div class="frame playful-card overflow-hidden" data-persona="alle privat">
+                <h2 onclick="toggleFrame(this)"
+                    class="flex justify-between items-center p-6 text-white text-xl font-bold cursor-pointer select-none rounded-t-xl transition duration-300 ease-in-out" style="background-color: var(--secondary-accent);">
+                    📚 Sonstige personenbezogene Daten <span class="toggle-icon">▼</span>
+                </h2>
+                <div class="frame-content p-6 hidden">
+                    <div class="progress-bar w-full bg-gray-200 rounded-full h-3 mb-4">
+                        <div class="h-3 rounded-full" style="width: 70%; background-color: var(--tertiary-accent);"></div>
+                    </div>
+                    <label for="hobbies" class="block text-gray-700 text-sm font-semibold mb-2">Hobbys</label>
+                    <input type="text" id="hobbies" value="Wandern, Fotografie, Kochen"
+                           class="playful-input w-full mb-4"/>
+
+                    <label for="interests" class="block text-gray-700 text-sm font-semibold mb-2">Interessen</label>
+                    <input type="text" id="interests" value="Digitale Trends, Nachhaltigkeit, asiatische Kulturen"
+                           class="playful-input w-full mb-4"/>
+
+                    <label for="contractData" class="block text-gray-700 text-sm font-semibold mb-2">Vertragsdaten</label>
+                    <textarea id="contractData" rows="2"
+                              class="playful-textarea w-full mb-4">Mietvertrag, Handyvertrag, Stromvertrag</textarea>
+                </div>
+            </div>
+
+            <div class="frame playful-card overflow-hidden" data-persona="alle">
+                <h2 onclick="toggleFrame(this)"
+                    class="flex justify-between items-center p-6 text-white text-xl font-bold cursor-pointer select-none rounded-t-xl transition duration-300 ease-in-out" style="background-color: var(--secondary-accent);">
+                    🛡️ Datenschutz & Kontrolle <span class="toggle-icon">▼</span>
+                </h2>
+                <div class="frame-content p-6 hidden">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3">Granulare Sichtbarkeit</h3>
+                    <div class="space-y-3 mb-6">
+                        <div class="flex items-center justify-between p-3 rounded-lg" style="background-color: var(--neutral-background);">
+                            <span class="text-gray-700">Finanzdaten freigeben</span>
+                            <label class="playful-toggle">
+                                <input type="checkbox" checked>
+                                <span class="playful-slider"></span>
+                            </label>
+                        </div>
+                        <div class="flex items-center justify-between p-3 rounded-lg" style="background-color: var(--neutral-background);">
+                            <span class="text-gray-700">Gesundheitsdaten für Notfälle</span>
+                            <label class="playful-toggle">
+                                <input type="checkbox">
+                                <span class="playful-slider"></span>
+                            </label>
+                        </div>
+                        <div class="flex items-center justify-between p-3 rounded-lg" style="background-color: var(--neutral-background);">
+                            <span class="text-gray-700">Lokationsdaten für personalisierte Angebote</span>
+                            <label class="playful-toggle">
+                                <input type="checkbox" checked>
+                                <span class="playful-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3">Transparente Logik & Zugriffs-Historie</h3>
+                    <div class="p-4 rounded-lg text-sm text-gray-700 space-y-2" style="background-color: var(--neutral-background);">
+                        <p class="font-semibold">Zugriffshistorie:</p>
+                        <ul class="list-disc list-inside">
+                            <li>[2025-05-30 14:30] Finanzdaten abgerufen (Routine: Budgetanalyse)</li>
+                            <li>[2025-05-29 09:15] Kontaktdaten geteilt (Zweck: Online-Bewerbung)</li>
+                            <li>[2025-05-28 18:00] Lokationsdaten aktualisiert (Routine: Reiseplanung)</li>
+                            <li>[2025-05-27 10:00] Gesundheitsdaten für Notfallprofil aktualisiert</li>
+                        </ul>
+                        <p class="mt-2 text-xs text-gray-600">Echtzeit-Benachrichtigung bei jeder Datenfreigabe.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Funktion zum Umschalten der Sichtbarkeit eines Frames
+        function toggleFrame(headerElement) {
+            const frame = headerElement.closest('.frame');
+            const content = frame.querySelector('.frame-content');
+            const toggleIcon = headerElement.querySelector('.toggle-icon');
+
+            content.classList.toggle('hidden');
+
+            if (content.classList.contains('hidden')) {
+                toggleIcon.textContent = '▼';
+                headerElement.classList.remove('rounded-b-none');
+            } else {
+                toggleIcon.textContent = '▲';
+                headerElement.classList.add('rounded-b-none');
+            }
+        }
+
+        // Funktion zum Wechseln der Persona und Aktualisieren der UI
+        function switchPersona(selectedPersona) {
+            const frames = document.querySelectorAll('.frame');
+            const moodIndicator = document.getElementById('moodIndicator');
+            const avatarContainer = document.getElementById('avatarContainer');
+            const currentPersonaDisplay = document.getElementById('currentPersonaDisplay');
+
+            let moodEmoji = '😊';
+            let personaText = '';
+            let borderColor = 'var(--persona-alle)'; // Standardfarbe
+
+            if (selectedPersona === 'beruflich') {
+                moodEmoji = '💼';
+                personaText = 'Beruflich';
+                borderColor = 'var(--persona-beruflich)';
+            } else if (selectedPersona === 'privat') {
+                moodEmoji = '🏠';
+                personaText = 'Privat';
+                borderColor = 'var(--persona-privat)';
+            } else if (selectedPersona === 'reise') {
+                moodEmoji = '✈️';
+                personaText = 'Reise';
+                borderColor = 'var(--persona-reise)';
+            } else {
+                personaText = 'Alle Frames';
+                borderColor = 'var(--persona-alle)';
+            }
+
+            avatarContainer.style.borderColor = borderColor;
+            // Aktualisiere auch den Schatten, um zur neuen Farbe zu passen
+            avatarContainer.style.boxShadow = `0 8px 16px ${borderColor}4D`; 
+            applyAvatarStyle(document.getElementById('avatarStyle').value); // Stil erneut anwenden, um Farbanpassung zu übernehmen
+
+            moodIndicator.textContent = moodEmoji;
+            currentPersonaDisplay.textContent = `Aktive Persona: ${personaText}`;
+
+            frames.forEach(frame => {
+                const framePersonas = frame.dataset.persona;
+                if (selectedPersona === 'alle' || framePersonas.includes(selectedPersona)) {
+                    frame.style.display = 'block';
+                } else {
+                    frame.style.display = 'none';
+                }
+            });
+        }
+
+        // Funktion zum Auswählen eines vordefinierten Avatars
+        function selectPredefinedAvatar(value) {
+            const uploadedAvatarImage = document.getElementById('uploadedAvatarImage');
+            const defaultAvatarSvg = document.getElementById('defaultAvatarSvg');
+            const avatarUploadInput = document.getElementById('avatarUpload');
+            const avatarStyleSelect = document.getElementById('avatarStyle');
+
+            if (value === 'custom') {
+                uploadedAvatarImage.src = '';
+                uploadedAvatarImage.classList.add('hidden');
+                defaultAvatarSvg.classList.add('hidden');
+                avatarUploadInput.classList.remove('hidden');
+                avatarStyleSelect.value = 'realistic';
+                applyAvatarStyle('realistic');
+            } else {
+                uploadedAvatarImage.src = value;
+                uploadedAvatarImage.classList.remove('hidden');
+                defaultAvatarSvg.classList.add('hidden');
+                avatarUploadInput.classList.add('hidden');
+                avatarStyleSelect.value = 'realistic';
+                applyAvatarStyle('realistic');
+            }
+        }
+
+        // Event-Listener für das Hochladen eines Avatars
+        document.getElementById('avatarUpload').addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            const uploadedAvatarImage = document.getElementById('uploadedAvatarImage');
+            const avatarStyleSelect = document.getElementById('avatarStyle');
+            const predefinedAvatarSelector = document.getElementById('predefinedAvatarSelector');
+
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    uploadedAvatarImage.src = e.target.result;
+                    avatarStyleSelect.value = 'realistic';
+                    predefinedAvatarSelector.value = 'custom';
+                    applyAvatarStyle('realistic');
+                };
+                reader.readAsDataURL(file);
+            } else {
+                predefinedAvatarSelector.value = 'uploaded:Portrait.jpg-ebc4d5da-40b5-4b0e-9b09-9a5ab4001e9c';
+                selectPredefinedAvatar('uploaded:Portrait.jpg-ebc4d632-cceb-4ff5-ade4-e3e3a0011379.jpg');
+            }
+        });
+
+        // Funktion zum Anwenden von Avatar-Stilen
+        function applyAvatarStyle(style) {
+            const avatarContainer = document.getElementById('avatarContainer');
+            const uploadedAvatarImage = document.getElementById('uploadedAvatarImage');
+            const defaultAvatarSvg = document.getElementById('defaultAvatarSvg');
+
+            // Setze alle vorherigen Stile zurück
+            avatarContainer.style.filter = 'none';
+            avatarContainer.style.outline = 'none';
+            // Wende den aktuellen Persona-Schatten erneut an (wird von switchPersona gesetzt)
+            avatarContainer.style.boxShadow = `0 8px 16px ${avatarContainer.style.borderColor}4D`;
+
+            if (style === 'default') {
+                uploadedAvatarImage.classList.add('hidden');
+                defaultAvatarSvg.classList.remove('hidden');
+            } else {
+                if (uploadedAvatarImage.src) { // Zeige Bild nur, wenn eines geladen ist
+                    uploadedAvatarImage.classList.remove('hidden');
+                    defaultAvatarSvg.classList.add('hidden');
+                } else { // Fallback auf Standard-SVG, wenn kein Bild hochgeladen
+                    uploadedAvatarImage.classList.add('hidden');
+                    defaultAvatarSvg.classList.remove('hidden');
+                }
+
+                if (style === 'futuristic') {
+                    avatarContainer.style.filter = 'grayscale(50%) sepia(20%) hue-rotate(180deg) brightness(1.1)';
+                    avatarContainer.style.boxShadow = `0 0 0 7px #00faff4D, 0 0 20px 10px #00faff20`;
+                } else if (style === 'cartoon') {
+                    avatarContainer.style.filter = 'saturate(1.5) contrast(1.2)';
+                    avatarContainer.style.outline = '2px solid black';
+                }
+            }
+        }
+
+        // Funktion zum Aktualisieren des Stimmungs-Emojis
+        function updateMood(emoji) {
+            document.getElementById('moodIndicator').textContent = emoji;
+        }
+
+        // Funktion zum Generieren einer Zusammenfassung persönlicher Daten mittels Gemini API
+        async function generatePersonalSummary() {
+            const name = document.getElementById('name').value;
+            const birthdate = document.getElementById('birthdate').value;
+            const gender = document.getElementById('gender').value;
+            const nationality = document.getElementById('nationality').value;
+            const birthplace = document.getElementById('birthplace').value;
+            const aboutMe = document.getElementById('aboutMe').value;
+
+            const outputDiv = document.getElementById('personalSummaryOutput');
+            const loadingSpinner = document.getElementById('personalSummaryLoading');
+
+            outputDiv.classList.add('hidden');
+            outputDiv.innerHTML = '';
+            loadingSpinner.classList.remove('hidden');
+
+            const prompt = `Fasse die folgenden persönlichen Basisdaten zusammen und gib eine kurze Empfehlung, welche zusätzlichen Informationen für ein "Digital Twin"-System nützlich sein könnten, basierend auf den typischen Kategorien von Identifikationsdaten.
+            Name: ${name}
+            Geburtsdatum: ${birthdate}
+            Geschlecht: ${gender}
+            Nationalität: ${nationality}
+            Geburtsort: ${birthplace}
+            Über Mich/Bio: ${aboutMe}
+            `;
+
+            let chatHistory = [];
+            chatHistory.push({ role: "user", parts: [{ text: prompt }] });
+
+            const payload = { contents: chatHistory };
+            const apiKey = "";
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+
+                if (result.candidates && result.candidates.length > 0 &&
+                    result.candidates[0].content && result.candidates[0].content.parts &&
+                    result.candidates[0].content.parts.length > 0) {
+                    const text = result.candidates[0].content.parts[0].text;
+                    outputDiv.innerHTML = `<p>${text.replace(/\n/g, '<br>')}</p>`;
+                    outputDiv.classList.remove('hidden');
+                } else {
+                    outputDiv.innerHTML = '<p class="text-red-600">Fehler: Keine gültige Antwort vom KI-Modell erhalten.</p>';
+                    outputDiv.classList.remove('hidden');
+                }
+            } catch (error) {
+                console.error('Error calling Gemini API for personal summary:', error);
+                outputDiv.innerHTML = `<p class="text-red-600">Fehler beim Abrufen der Daten: ${error.message}</p>`;
+                outputDiv.classList.remove('hidden');
+            } finally {
+                loadingSpinner.classList.add('hidden');
+            }
+        }
+
+        // Funktion zum Generieren einer Zusammenfassung von Finanzdaten mittels Gemini API
+        async function generateFinancialSummary() {
+            const iban = document.getElementById('iban').value;
+            const creditCard = document.getElementById('creditCard').value;
+            const creditScore = document.getElementById('creditScore').value;
+
+            const outputDiv = document.getElementById('financialSummaryOutput');
+            const loadingSpinner = document.getElementById('financialSummaryLoading');
+
+            outputDiv.classList.add('hidden');
+            outputDiv.innerHTML = '';
+            loadingSpinner.classList.remove('hidden');
+
+            const prompt = `Fasse die folgenden Finanzdaten zusammen und gib eine kurze Empfehlung, welche zusätzlichen Informationen für ein "Digital Twin"-System nützlich sein könnten, insbesondere im Hinblick auf Finanzmanagement und Sicherheit.
+            IBAN: ${iban}
+            Kreditkarte vorhanden: ${creditCard}
+            Kreditwürdigkeit: ${creditScore}
+            `;
+
+            let chatHistory = [];
+            chatHistory.push({ role: "user", parts: [{ text: prompt }] });
+
+            const payload = { contents: chatHistory };
+            const apiKey = "";
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+
+                if (result.candidates && result.candidates.length > 0 &&
+                    result.candidates[0].content && result.candidates[0].content.parts &&
+                    result.candidates[0].content.parts.length > 0) {
+                    const text = result.candidates[0].content.parts[0].text;
+                    outputDiv.innerHTML = `<p>${text.replace(/\n/g, '<br>')}</p>`;
+                    outputDiv.classList.remove('hidden');
+                } else {
+                    outputDiv.innerHTML = '<p class="text-red-600">Fehler: Keine gültige Antwort vom KI-Modell erhalten.</p>';
+                    outputDiv.classList.remove('hidden');
+                }
+            } catch (error) {
+                console.error('Error calling Gemini API for financial summary:', error);
+                outputDiv.innerHTML = `<p class="text-red-600">Fehler beim Abrufen der Daten: ${error.message}</p>`;
+                outputDiv.classList.remove('hidden');
+            } finally {
+                loadingSpinner.classList.add('hidden');
+            }
+        }
+
+        // Funktion zur Durchführung einer Betrugsprüfung mittels Gemini API
+        async function checkFinancialFraud() {
+            const iban = document.getElementById('iban').value;
+            const creditCard = document.getElementById('creditCard').value;
+            const creditScore = document.getElementById('creditScore').value;
+
+            const outputDiv = document.getElementById('fraudCheckOutput');
+            const loadingSpinner = document.getElementById('fraudCheckLoading');
+
+            outputDiv.classList.add('hidden');
+            outputDiv.innerHTML = '';
+            loadingSpinner.classList.remove('hidden');
+
+            const prompt = `Führe eine Betrugsprüfung für die folgenden Finanzdaten durch. Identifiziere potenzielle Unregelmäßigkeiten oder Risiken und schlage präventive Maßnahmen vor.
+            IBAN: ${iban}
+            Kreditkarte vorhanden: ${creditCard}
+            Kreditwürdigkeit: ${creditScore}
+            Zusätzliche Annahme: Letzte 3 Transaktionen: 100 EUR an Online-Shop, 50 EUR an Restaurant, 1500 EUR an unbekanntes Konto in Übersee.
+            `;
+
+            let chatHistory = [];
+            chatHistory.push({ role: "user", parts: [{ text: prompt }] });
+
+            const payload = { contents: chatHistory };
+            const apiKey = "";
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+
+                if (result.candidates && result.candidates.length > 0 &&
+                    result.candidates[0].content && result.candidates[0].content.parts &&
+                    result.candidates[0].content.parts.length > 0) {
+                    const text = result.candidates[0].content.parts[0].text;
+                    outputDiv.innerHTML = `<p>${text.replace(/\n/g, '<br>')}</p>`;
+                    outputDiv.classList.remove('hidden');
+                } else {
+                    outputDiv.innerHTML = '<p class="text-red-600">Fehler: Keine gültige Antwort vom KI-Modell erhalten.</p>';
+                    outputDiv.classList.remove('hidden');
+                }
+            } catch (error) {
+                console.error('Error calling Gemini API for fraud check:', error);
+                outputDiv.innerHTML = `<p class="text-red-600">Fehler beim Abrufen der Daten: ${error.message}</p>`;
+                outputDiv.classList.remove('hidden');
+            } finally {
+                loadingSpinner.classList.add('hidden');
+            }
+        }
+
+        // Initialisierung bei DOM-Load
+        document.addEventListener('DOMContentLoaded', () => {
+            const personaSelect = document.getElementById('persona');
+            switchPersona(personaSelect.value);
+
+            const predefinedAvatarSelector = document.getElementById('predefinedAvatarSelector');
+            predefinedAvatarSelector.value = 'uploaded:Portrait.jpg-ebc4d632-cceb-4ff5-ade4-e3e3a0011379.jpg'; // Setze den Standard-Avatar
+            selectPredefinedAvatar('uploaded:Portrait.jpg-ebc4d632-cceb-4ff5-ade4-e3e3a0011379.jpg'); // Wende ihn an
+        });
+    </script>
+</body>
+</html>
